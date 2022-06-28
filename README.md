@@ -1,1 +1,3 @@
-# selenium_homework
+# Selenium_homework
+
+**Домашние работы по Selenium на курсе Otus**
