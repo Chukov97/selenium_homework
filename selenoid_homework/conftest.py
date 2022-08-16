@@ -9,10 +9,30 @@ from log import setup_logging
 DRIVERS = "C:/Users/Licard/Desktop/Develop/Drivers"
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    rep = outcome.get_result()
+    try:
+        if rep.when == 'call' and rep.failed:
+            if 'browser' in item.fixturenames:
+                web_driver = item.funcargs['browser']
+            else:
+                print('Fail to take screen-shot')
+                return
+            allure.attach(
+                web_driver.get_screenshot_as_png(),
+                name='screenshot',
+                attachment_type=allure.attachment_type.PNG
+            )
+    except Exception as e:
+        print('Fail to take screen-shot: {}'.format(e))
+
+
 def pytest_addoption(parser):
     parser.addoption("--browser", default="chrome")
-    parser.addoption("--url", action="store", default="http://192.168.1.74:8081")
-    parser.addoption("--executor", action="store", default="192.168.1.74")
+    parser.addoption("--url", action="store", default="http://172.20.10.2:8081")
+    parser.addoption("--executor", action="store", default="192.168.16.1")
     parser.addoption("--log_level", action="store", default="INFO")
     parser.addoption("--videos", default=False)
     parser.addoption("--vnc", default=True)
@@ -73,23 +93,3 @@ def driver(request):
     request.addfinalizer(fin)
 
     return browser
-
-
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    rep = outcome.get_result()
-    try:
-        if rep.when == 'call' and rep.failed:
-            if 'browser' in item.fixturenames:
-                web_driver = item.funcargs['browser']
-            else:
-                print('Fail to take screen-shot')
-                return
-            allure.attach(
-                web_driver.get_screenshot_as_png(),
-                name='screenshot',
-                attachment_type=allure.attachment_type.PNG
-            )
-    except Exception as e:
-        print('Fail to take screen-shot: {}'.format(e))
